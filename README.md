@@ -2,7 +2,7 @@
 
 Multi-step loan application form (Personal, Home, Business) in pure HTML, CSS and JavaScript. Single file, no dependencies.
 
-**Live demo:** https://YOUR-USERNAME.github.io/loan-application/
+**Live demo:** https://Asim19xd.github.io/loan-application/
 
 ## Features
 - 9 steps: Loan, Personal, Identity, Address, Employment, Details, Obligations, Documents, Review and sign
