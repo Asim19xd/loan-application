@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Loan Application</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f4f6fa;--fg:#14213d;--card:#fff;--mu:#5b6678;--bd:#d5dbe6;--pri:#1f4fd8;--on:#fff;--err:#c62828;--ok:#1b7f3b;--warn:#a15c00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1424;--fg:#e8ecf5;--card:#171f35;--mu:#9aa6bd;--bd:#2c3753;--pri:#6c93ff;--on:#0e1424;--err:#ff7b7b;--ok:#5fd18a;--warn:#ffb454}}
+:root[data-theme=dark]{--bg:#0e1424;--fg:#e8ecf5;--card:#171f35;--mu:#9aa6bd;--bd:#2c3753;--pri:#6c93ff;--on:#0e1424;--err:#ff7b7b;--ok:#5fd18a;--warn:#ffb454}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0}h2{font-size:18px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:14px}
+.steps{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;margin:0;list-style:none}
+.steps button{white-space:nowrap;border:1px solid var(--bd);background:var(--card);color:var(--mu);border-radius:20px;padding:4px 12px;font-size:13px;cursor:pointer}
+.steps .cur{background:var(--pri);color:var(--on);border-color:var(--pri)}.steps .done{color:var(--ok)}.steps button:disabled{opacity:.45;cursor:default}
+.bar{height:6px;background:var(--bd);border-radius:3px;overflow:hidden;margin-bottom:8px}.bar i{display:block;height:100%;background:var(--pri);transition:width .3s}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+.fld{display:flex;flex-direction:column;position:relative}.fld.w{grid-column:1/-1}
+label{font-weight:600;font-size:13px;margin-bottom:4px}
+input,select{font:inherit;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--fg)}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+[aria-invalid=true]{border-color:var(--err)}.er{color:var(--err);font-size:12.5px;min-height:18px}.ht{color:var(--mu);font-size:12px}
+.row{display:flex;gap:8px}.row input{flex:1}
+button.b{font:inherit;font-weight:600;padding:9px 18px;border-radius:8px;border:1px solid var(--pri);background:var(--pri);color:var(--on);cursor:pointer}
+button.b.s{background:transparent;color:var(--pri)}button.b:disabled{opacity:.5}
+.nav{display:flex;justify-content:space-between;margin-top:16px}
+.ok{color:var(--ok);font-size:13px}.ac{position:absolute;top:100%;left:0;right:0;z-index:5;background:var(--card);border:1px solid var(--bd);border-radius:8px;margin:2px 0 0;padding:0;list-style:none;max-height:180px;overflow:auto}
+.ac li{padding:8px 10px;cursor:pointer}.ac li:hover{background:var(--bg)}
+.doc{border:1px dashed var(--bd);border-radius:8px;padding:10px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.doc img{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--bd)}.pdf{width:64px;height:64px;display:grid;place-items:center;border:1px solid var(--bd);border-radius:6px;font-weight:700;color:var(--err)}
+canvas{width:100%;max-width:520px;height:160px;border:1px solid var(--bd);border-radius:8px;background:#fff;touch-action:none;display:block}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0}dt{color:var(--mu)}dd{margin:0;font-weight:600}
+.banner{border-color:var(--pri)}.big{font-size:28px;font-weight:700}.tag{display:inline-block;padding:2px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--bd);font-weight:700}
+#tp li{font-size:13px;list-style:none}#tp .p{color:var(--ok)}#tp .f{color:var(--err)}
+@media print{.steps,.nav,.bar,#tools,.banner{display:none}}
+</style></head><body><main>
+<h1>Loan Application</h1>
+<div id="banner"></div><div class="bar"><i id="pb"></i></div><ol class="steps" id="steps"></ol>
+<section class="card" id="box" aria-live="polite"></section>
+<div class="nav" id="nav"></div>
+<div id="tools" class="card"><button class="b s" id="rt">Run E2E tests</button> <span class="ht">Tests drive the real UI and use a separate save slot.</span><ul id="tp" style="padding:0"></ul></div>
+</main>
+<script>
+const $=(s,r=document)=>r.querySelector(s),E=(t,a={},...c)=>{const e=document.createElement(t);for(const k in a)a[k]==null?0:k==='class'?e.className=a[k]:k.startsWith('on')?e.addEventListener(k.slice(2),a[k]):e.setAttribute(k,a[k]);c.flat().filter(x=>x!=null&&x!==false).forEach(x=>e.append(x));return e};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const emi=(P,r,n)=>{const i=r/1200,g=Math.pow(1+i,n);return P*i*g/(g-1)};
+const pv=(m,r,n)=>{const i=r/1200;return m*(1-Math.pow(1+i,-n))/i};
+const age=d=>Math.floor((Date.now()-new Date(d))/31557600000);
+/* Verhoeff (Aadhaar checksum) */
+const dm=[[0,1,2,3,4,5,6,7,8,9],[1,2,3,4,0,6,7,8,9,5],[2,3,4,0,1,7,8,9,5,6],[3,4,0,1,2,8,9,5,6,7],[4,0,1,2,3,9,5,6,7,8],[5,9,8,7,6,0,4,3,2,1],[6,5,9,8,7,1,0,4,3,2],[7,6,5,9,8,2,1,0,4,3],[8,7,6,5,9,3,2,1,0,4],[9,8,7,6,5,4,3,2,1,0]];
+const pm=[[0,1,2,3,4,5,6,7,8,9],[1,5,7,6,2,8,3,0,9,4],[5,8,0,3,7,9,6,1,4,2],[8,9,1,6,0,4,3,5,2,7],[9,4,5,3,1,2,6,8,7,0],[4,2,8,6,5,7,3,9,0,1],[2,7,9,3,8,0,6,4,1,5],[7,0,4,6,9,1,3,2,5,8]];
+const verhoeff=s=>{let c=0;[...s].reverse().forEach((ch,i)=>c=dm[c][pm[i%8][+ch]]);return c===0};
+const mkAadhaar=s=>{for(let k=0;k<10;k++)if(verhoeff(s+k))return s+k};
+const rng={Personal:[5e4,25e5,6,84],Home:[5e5,5e7,60,360],Business:[1e5,2e7,12,120]};
+const BASE={Personal:11.5,Home:8.75,Business:13};
+const PLACES=[['Sitabuldi Main Road','Nagpur','Maharashtra','440012'],['Dharampeth Extension','Nagpur','Maharashtra','440010'],['Koregaon Park','Pune','Maharashtra','411001'],['Andheri East','Mumbai','Maharashtra','400069'],['Connaught Place','New Delhi','Delhi','110001'],['Indiranagar','Bengaluru','Karnataka','560038'],['T. Nagar','Chennai','Tamil Nadu','600017'],['Banjara Hills','Hyderabad','Telangana','500034']];
+const eff=()=>D.type==='Business'?'Self-employed':D.empType;
+const newEmi=()=>{const c=calc();return c?c.emi:0};
+function calc(){const a=+D.amount,n=+D.tenure;if(!a||!n||!D.type)return null;const cib=+D.cibil,rate=BASE[D.type]+(cib?(cib>=750?0:cib>=700?.75:1.75):.75),e=emi(a,rate,n),inc=+D.income||0,ex=+D.existingEmi||0;return{rate,emi:e,foir:inc?(ex+e)/inc:0,max:Math.max(0,.5*inc-ex)}}
+const nv=(v,lo,hi,m)=>isNaN(+v)||+v<lo||+v>hi?m:'';
+const S=[
+{n:'Loan',f:[
+ {k:'type',l:'Loan type',t:'select',o:['Personal','Home','Business'],w:1},
+ {k:'amount',l:'Loan amount (₹)',t:'number',show:()=>D.type,v:v=>{const r=rng[D.type];return nv(v,r[0],r[1],`${D.type} loans range from ${inr(r[0])} to ${inr(r[1])}`)}},
+ {k:'tenure',l:'Tenure (months)',t:'number',show:()=>D.type,v:v=>{const r=rng[D.type];return nv(v,r[2],r[3],`Tenure must be ${r[2]}–${r[3]} months`)}}]},
+{n:'Personal',f:[
+ {k:'name',l:'Full name (as on PAN)',t:'text',v:v=>/^[A-Za-z][A-Za-z .'-]{2,59}$/.test(v)?'':'Enter your full name (letters only)'},
+ {k:'dob',l:'Date of birth',t:'date',v:v=>{const a=age(v);if(isNaN(a)||a<21||a>65)return 'Applicant must be 21–65 years old';return a+(+D.tenure||0)/12>70?`Age plus tenure exceeds 70 years (you’d be ${(a+D.tenure/12).toFixed(0)} at maturity). Shorten the tenure.`:''}},
+ {k:'mobile',l:'Mobile number',t:'tel',pre:v=>v.replace(/\D/g,'').slice(0,10),v:v=>/^[6-9]\d{9}$/.test(v)?'':'Enter a valid 10-digit Indian mobile number'},
+ {k:'email',l:'Email',t:'email',v:v=>/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(v)?'':'Enter a valid email address'}]},
+{n:'Identity',f:[
+ {k:'pan',l:'PAN',t:'text',rs:['panOk'],h:'Format ABCDE1234F. Demo: a PAN ending in X returns “no record”.',pre:v=>v.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10),btn:'pan',v:v=>!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v)?'Invalid PAN format':D.panOk?'':'Verify your PAN'},
+ {k:'aadhaar',l:'Aadhaar number',t:'text',rs:['aadhaarOk','otpSent'],pre:v=>v.replace(/\D/g,'').slice(0,12),btn:'aad',h:'12 digits, checksum validated. Demo OTP: 123456',v:v=>!/^[2-9]\d{11}$/.test(v)||!verhoeff(v)?'Invalid Aadhaar number (checksum failed)':D.aadhaarOk?'':'Verify with OTP'},
+ {k:'otp',l:'Aadhaar OTP',t:'text',show:()=>D.otpSent&&!D.aadhaarOk,pre:v=>v.replace(/\D/g,'').slice(0,6),v:v=>v==='123456'?'':'Incorrect OTP'}]},
+{n:'Address',f:[
+ {k:'q',l:'Search address',t:'text',opt:1,w:1,ac:1,h:'Try “Sitabuldi”, “Pune” or “560038”'},
+ {k:'line1',l:'Address line',t:'text',v:v=>v.length<5?'Enter at least 5 characters':''},
+ {k:'pincode',l:'PIN code',t:'text',pre:v=>v.replace(/\D/g,'').slice(0,6),v:v=>/^[1-9]\d{5}$/.test(v)?'':'Enter a valid 6-digit PIN'},
+ {k:'city',l:'City',t:'text'},{k:'state',l:'State',t:'text'},
+ {k:'resType',l:'Residence type',t:'select',o:['Owned','Rented','Parental']},
+ {k:'rent',l:'Monthly rent (₹)',t:'number',show:()=>D.resType==='Rented',v:v=>nv(v,1000,1e6,'Enter rent between ₹1,000 and ₹10,00,000')},
+ {k:'years',l:'Years at address',t:'number',v:v=>nv(v,0,80,'Enter 0–80')}]},
+{n:'Employment',f:[
+ {k:'empType',l:'Employment type',t:'select',o:['Salaried','Self-employed'],show:()=>D.type!=='Business'},
+ {k:'employer',l:'Employer',t:'text',show:()=>eff()==='Salaried'},
+ {k:'desig',l:'Designation',t:'text',show:()=>eff()==='Salaried'},
+ {k:'bizName',l:'Business name',t:'text',show:()=>eff()==='Self-employed'},
+ {k:'income',l:'Net monthly income (₹)',t:'number',v:v=>nv(v,15000,1e7,'Minimum income is ₹15,000 per month')},
+ {k:'exp',l:'Work experience (years)',t:'number',v:v=>nv(v,0,45,'Enter 0–45')}]},
+{n:'Details',f:[
+ {k:'purpose',l:'Purpose',t:'select',o:['Medical','Education','Travel','Wedding','Debt consolidation'],show:()=>D.type==='Personal'},
+ {k:'propType',l:'Property type',t:'select',o:['Apartment','Independent house','Plot + construction'],show:()=>D.type==='Home'},
+ {k:'propCity',l:'Property city',t:'text',show:()=>D.type==='Home'},
+ {k:'propValue',l:'Property value (₹)',t:'number',show:()=>D.type==='Home',v:v=>+v<+D.amount?'Property value cannot be below the loan amount':+D.amount>.9*v?`Loan exceeds 90% LTV. Max for this property: ${inr(.9*v)}`:''},
+ {k:'gst',l:'GSTIN',t:'text',show:()=>D.type==='Business',pre:v=>v.toUpperCase().slice(0,15),v:v=>/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(v)?'':'Invalid GSTIN format'},
+ {k:'bizNature',l:'Business type',t:'select',o:['Manufacturing','Trading','Services','Retail'],show:()=>D.type==='Business'},
+ {k:'vintage',l:'Years in business',t:'number',show:()=>D.type==='Business',v:v=>+v<2?'Business must be at least 2 years old':nv(v,2,80,'Enter 2–80')},
+ {k:'turnover',l:'Annual turnover (₹)',t:'number',show:()=>D.type==='Business',v:v=>+D.amount>.5*v?'Loan cannot exceed 50% of annual turnover':''}]},
+{n:'Obligations',f:[
+ {k:'existingEmi',l:'Existing monthly EMIs (₹)',t:'number',v:v=>{if(+v<0)return 'Cannot be negative';const c=calc();return c&&c.foir>.6?`Total obligations would be ${Math.round(c.foir*100)}% of income (limit 60%). Reduce the amount or extend the tenure.`:''}},
+ {k:'cards',l:'Credit cards held',t:'number',v:v=>nv(v,0,20,'Enter 0–20')},
+ {k:'cibil',l:'CIBIL score (optional)',t:'number',opt:1,v:v=>nv(v,300,900,'Score must be 300–900')}]},
+{n:'Documents',docs:1},{n:'Review & sign',review:1}];
+const NAMES=S.map(s=>s.n);
+const docList=()=>['PAN card','Aadhaar card',...({Personal:['Salary slip / bank statement'],Home:['Property papers','Salary slip / bank statement'],Business:['GST certificate','Last 2 years’ ITR']}[D.type]||[])];
+let D={},step=0,max=0,touched={},KEY='loanApp.v1',sig='',saveT;
+const vis=f=>!f.show||f.show();
+const err=f=>{if(!vis(f))return '';const v=D[f.k];if(v==null||String(v).trim()==='')return f.opt?'':'This field is required';return f.v?f.v(String(v)):''};
+function stepErrs(i){const s=S[i];if(s.docs)return docList().filter(n=>!(D.docs||{})[n]).map(n=>({k:'doc',m:`Upload: ${n}`}));if(s.review)return [!D.consent&&{k:'consent',m:'Please accept the declaration'},!D.sig&&{k:'sig',m:'Signature is required'}].filter(Boolean);return s.f.map(f=>({k:f.k,m:err(f)})).filter(x=>x.m)}
+const allErrs=()=>S.slice(0,8).flatMap((s,i)=>stepErrs(i).map(e=>({...e,s:i})));
+function save(){if(window.NOSAVE)return;clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify({D,step,max,t:Date.now()}))}catch(e){}},250)}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+const visSig=()=>S[step].f?S[step].f.map(f=>vis(f)?1:0).join(''):'';
+function showErr(f){const e=$('#e_'+f.k),i=$('#f_'+f.k);if(!e)return;const m=touched[f.k]?err(f):'';e.textContent=m;i.setAttribute('aria-invalid',!!m);e.id='e_'+f.k}
+function fieldEl(f){const id='f_'+f.k;let i=f.t==='select'?E('select',{id},E('option',{value:''},'Select…'),f.o.map(o=>E('option',{value:o},o))):E('input',{id,type:f.t,autocomplete:'off'});i.value=D[f.k]??'';
+ i.setAttribute('aria-describedby','e_'+f.k);i.addEventListener('blur',()=>{touched[f.k]=1;showErr(f)});i.addEventListener('input',()=>onIn(f,i));
+ const w=E('div',{class:'fld'+(f.w?' w':'')},E('label',{for:id},f.l+(f.opt?'':' *')),f.btn?E('div',{class:'row'},i,E('button',{class:'b s',type:'button',id:'btn_'+f.btn,onclick:()=>verify(f.btn)},f.btn==='pan'?'Verify':'Send OTP')):i,
+  f.k==='pan'&&D.panOk?E('div',{class:'ok'},'✔ Verified · name on record: '+(D.name||'').toUpperCase()):f.k==='aadhaar'&&D.aadhaarOk?E('div',{class:'ok'},'✔ Aadhaar verified'):f.h?E('div',{class:'ht'},f.h):null,E('div',{class:'er',id:'e_'+f.k,role:'alert'}));
+ if(f.ac){const ul=E('ul',{class:'ac',id:'acl',hidden:''});w.append(ul);i.addEventListener('input',()=>{const q=i.value.toLowerCase(),m=q.length<2?[]:PLACES.filter(p=>p.join(' ').toLowerCase().includes(q));ul.replaceChildren(...m.map(p=>E('li',{onclick:()=>{Object.assign(D,{line1:p[0],city:p[1],state:p[2],pincode:p[3],q:''});['line1','city','state','pincode'].forEach(k=>touched[k]=1);save();render()}},`${p[0]}, ${p[1]}, ${p[2]} ${p[3]}`)));ul.hidden=!m.length})}
+ return w}
+function onIn(f,i){let v=i.value;const had=(f.rs||[]).some(k=>D[k]);if(f.pre){v=f.pre(v);i.value=v}D[f.k]=v;(f.rs||[]).forEach(k=>delete D[k]);touched[f.k]=1;
+ if(f.k==='otp'&&v==='123456'){D.aadhaarOk=1}if(f.k==='type'&&v==='Business')D.empType='Self-employed';
+ save();if(visSig()!==sig||f.k==='otp'||had){const id=i.id,p=i.selectionStart;render();const n=$('#'+id);if(n&&n.focus){n.focus();try{n.setSelectionRange(p,p)}catch(e){}}}else S[step].f.forEach(g=>{if(vis(g)&&(touched[g.k]||g===f))showErr(g)});bar()}
+async function verify(w){const b=$('#btn_'+w);if(w==='pan'){const f=S[2].f[0];touched.pan=1;const m=!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(D.pan||'')?'Enter a valid PAN first':null;if(m){$('#e_pan').textContent=m;return}b.disabled=true;b.textContent='Verifying…';await sleep(600);if(D.pan.endsWith('X')){$('#e_pan').textContent='No record found for this PAN';b.disabled=false;b.textContent='Verify';return}D.panOk=1;save();render()}
+ else{if(!/^[2-9]\d{11}$/.test(D.aadhaar||'')||!verhoeff(D.aadhaar)){touched.aadhaar=1;showErr(S[2].f[1]);return}b.disabled=true;await sleep(400);D.otpSent=1;save();render();$('#f_otp').focus()}}
+/* compression */
+async function compress(file,maxDim=1280,q=.7){if(!file.type.startsWith('image/'))return{blob:file,pdf:1};const bmp=await createImageBitmap(file),k=Math.min(1,maxDim/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);const b=await new Promise(r=>c.toBlob(r,'image/jpeg',q));return{blob:b.size<file.size?b:file}}
+const toURL=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+const kb=n=>n>1048576?(n/1048576).toFixed(1)+' MB':Math.round(n/1024)+' KB';
+function docsView(box){box.append(E('h2',{},'Upload documents'),E('p',{class:'ht'},'JPG, PNG or PDF, up to 8 MB. Images are compressed in your browser before saving.'));
+ docList().forEach((n,i)=>{const d=(D.docs||{})[n],m=E('div',{class:'er',id:'de'+i});box.append(E('div',{class:'doc'},d?(d.pdf?E('div',{class:'pdf'},'PDF'):E('img',{src:d.url,alt:n+' preview'})):E('div',{class:'pdf',style:'color:var(--mu)'},'—'),
+  E('div',{style:'flex:1;min-width:180px'},E('strong',{},n+' *'),d?E('div',{class:'ok'},`✔ ${d.name} · ${kb(d.orig)}${d.pdf?'':' → '+kb(d.size)+' (compressed)'}`):E('div',{class:'ht'},'Not uploaded'),m,E('input',{type:'file',id:'doc_'+i,accept:'image/*,.pdf',onchange:async e=>{const f=e.target.files[0];if(!f)return;if(f.size>8388608||!/^(image\/|application\/pdf)/.test(f.type)){m.textContent='Unsupported file or larger than 8 MB';return}m.textContent='Compressing…';const r=await compress(f);D.docs=D.docs||{};D.docs[n]={name:f.name,orig:f.size,size:r.blob.size,pdf:!!r.pdf,url:await toURL(r.blob)};save();render()}}),d?E('button',{class:'b s',type:'button',onclick:()=>{delete D.docs[n];save();render()}},'Remove'):null)))})}
+function reviewView(box){const c=calc(),errs=allErrs().filter(e=>e.s<8&&e.k!=='sig'&&e.k!=='consent');
+ box.append(E('h2',{},'Review & e-sign'),errs.length?E('div',{class:'card',style:'border-color:var(--err)',id:'fixes'},E('strong',{},'Fix these before submitting:'),errs.map(e=>E('div',{},`${NAMES[e.s]}: ${e.m} `,E('a',{href:'#',onclick:x=>{x.preventDefault();go(e.s)}},'Fix')))):null,
+ E('dl',{},[['Loan',`${D.type}, ${inr(D.amount)} over ${D.tenure} months`],['Applicant',`${D.name}, ${D.mobile}`],['PAN',D.pan+(D.panOk?' ✔':'')],['Address',`${D.line1}, ${D.city} ${D.pincode}`],['Income',inr(D.income)+'/month'],['Estimated EMI',c?inr(c.emi)+` @ ${c.rate}%`:'—']].flatMap(([a,b])=>[E('dt',{},a),E('dd',{},b)])),
+ E('p',{},E('label',{style:'font-weight:400'},E('input',{type:'checkbox',id:'f_consent',checked:D.consent?'':null,onchange:e=>{D.consent=e.target.checked;save();bar()}}),' I declare the information is true and consent to a credit check and to be contacted. *')),
+ E('strong',{},'Signature *'),E('canvas',{id:'sig',width:520,height:160,'aria-label':'Signature pad'}),E('div',{class:'row',style:'margin-top:6px'},E('button',{class:'b s',type:'button',id:'sigClear',onclick:()=>{D.sig='';save();render()}},'Clear'),E('span',{class:'er',id:'e_sig'})));
+ const cv=$('#sig',box),x=cv.getContext('2d');x.lineWidth=2.2;x.lineCap='round';x.strokeStyle='#111';if(D.sig){const im=new Image;im.onload=()=>x.drawImage(im,0,0);im.src=D.sig}
+ let dr=0,ink=0;const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};
+ cv.onpointerdown=e=>{dr=1;try{cv.setPointerCapture(e.pointerId)}catch(_){}x.beginPath();x.moveTo(...pt(e))};cv.onpointermove=e=>{if(!dr)return;ink++;x.lineTo(...pt(e));x.stroke()};
+ cv.onpointerup=()=>{if(!dr)return;dr=0;if(ink>3){D.sig=cv.toDataURL();save();bar()}}}
+function result(){clearTimeout(saveT);const c=calc(),el=Math.min(+D.amount,pv(c.max,c.rate,+D.tenure)),ok=c.foir<=.5&&el>=+D.amount*.999,ref='LN'+Date.now().toString(36).toUpperCase();try{localStorage.removeItem(KEY)}catch(e){}
+ $('#banner').replaceChildren();$('#nav').replaceChildren();$('#steps').replaceChildren();$('#pb').style.width='100%';const box=$('#box');box.replaceChildren(E('h2',{},'Pre-approval summary'),E('span',{class:'tag',id:'decision',style:'color:var(--'+(ok?'ok':'warn')+')'},ok?'Pre-approved':'Conditionally approved'),E('p',{class:'big'},inr(ok?D.amount:el)),
+ E('dl',{},[['Reference',ref],['Applicant',D.name],['Loan type',D.type],['Requested',inr(D.amount)],['Indicative rate',c.rate.toFixed(2)+'% p.a.'],['Monthly EMI',inr(ok?c.emi:emi(el,c.rate,+D.tenure))],['Tenure',D.tenure+' months'],['Obligations / income',Math.round(c.foir*100)+'%'],['Processing fee (1%)',inr((ok?D.amount:el)*.01)],['Documents',Object.keys(D.docs).length+' verified']].flatMap(([a,b])=>[E('dt',{},a),E('dd',{},b)])),
+ E('p',{class:'ht'},'Indicative only. Final approval depends on verification, credit bureau checks and underwriting.'),E('button',{class:'b',onclick:()=>print()},'Print / save PDF'),' ',E('button',{class:'b s',onclick:()=>{D={};step=max=0;touched={};init()}},'New application'))}
+function bar(){const n=stepErrs(step).length;$('#pb').style.width=(step/S.length*100+(n?0:100/S.length/2))+'%'}
+function go(i){step=i;max=Math.max(max,i);save();render();window.scrollTo(0,0)}
+function next(){const ers=stepErrs(step);if(ers.length){S[step].f&&S[step].f.forEach(f=>{touched[f.k]=1;showErr(f)});if(S[step].docs)ers.forEach((e,j)=>{const m=$('#de'+docList().indexOf(e.m.slice(8)));if(m)m.textContent='Required'});if(S[step].review){$('#e_sig').textContent=!D.sig?'Signature is required':'';}const f=S[step].f&&S[step].f.find(f=>touched[f.k]&&err(f));f&&$('#f_'+f.k).focus();return false}
+ if(step===S.length-1){if(allErrs().length){render();return false}return result(),true}go(step+1);return true}
+function render(){const box=$('#box');box.replaceChildren();const s=S[step];sig=visSig();
+ if(s.docs)docsView(box);else if(s.review)reviewView(box);else{box.append(E('h2',{},`Step ${step+1} of ${S.length}: ${s.n}`));const g=E('div',{class:'grid'});s.f.filter(vis).forEach(f=>g.append(fieldEl(f)));box.append(g);s.f.filter(vis).forEach(f=>showErr(f))}
+ $('#steps').replaceChildren(...NAMES.map((n,i)=>E('li',{},E('button',{type:'button',class:i===step?'cur':i<step?'done':'',disabled:i>max?'':null,'aria-current':i===step?'step':null,onclick:()=>go(i)},`${i<step?'✔ ':i+1+'. '}${n}`))));
+ $('#nav').replaceChildren(E('button',{class:'b s',id:'back',disabled:step?null:'',onclick:()=>go(step-1)},'Back'),E('button',{class:'b',id:'next',onclick:next},step===S.length-1?'Submit application':'Continue'));bar()}
+function init(){const sv=load(),b=$('#banner');b.replaceChildren();if(sv&&sv.D&&Object.keys(sv.D).length)b.append(E('div',{class:'card banner',id:'resume'},E('strong',{},'Resume your saved application? '),`Saved ${new Date(sv.t).toLocaleString()}. `,E('button',{class:'b',id:'resBtn',onclick:()=>{D=sv.D;step=sv.step;max=sv.max;b.replaceChildren();render()}},'Resume'),' ',E('button',{class:'b s',onclick:()=>{localStorage.removeItem(KEY);b.replaceChildren()}},'Start over')));render()}
+/* ---------- E2E suite (drives the real DOM) ---------- */
+const fill=(k,v)=>{const e=$('#f_'+k);e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('blur'))};
+const msg=k=>($('#e_'+k)||{}).textContent||'';
+const mkImg=async(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d'),d=x.createImageData(w,h);for(let i=0;i<d.data.length;i++)d.data[i]=i%4===3?255:Math.random()*255;x.putImageData(d,0,0);return new File([await new Promise(r=>c.toBlob(r,'image/jpeg',.97))],'scan.jpg',{type:'image/jpeg'})};
+const setFile=(i,f)=>{const dt=new DataTransfer();dt.items.add(f);const e=$('#doc_'+i);e.files=dt.files;e.dispatchEvent(new Event('change'))};
+const ink=()=>{const c=$('#sig'),r=c.getBoundingClientRect(),p=(t,x,y)=>c.dispatchEvent(new PointerEvent(t,{clientX:r.left+x,clientY:r.top+y,pointerId:1,bubbles:true}));p('pointerdown',10,10);for(let i=0;i<12;i++)p('pointermove',10+i*15,40+(i%3)*20);p('pointerup',200,60)};
+const seed=(o,s)=>{D={type:'Home',amount:'3000000',tenure:'240',name:'Asim Ahmad',dob:'1990-05-15',mobile:'9876543210',email:'a@b.in',income:'150000',existingEmi:'0',...o};touched={};step=s;max=8;render()};
+const T=[
+['PAN format validation',async()=>{seed({},2);fill('pan','abc');if(!msg('pan'))throw'no error';fill('pan','ABCPE1234F');if(msg('pan')!=='Verify your PAN')throw'got '+msg('pan')}],
+['Aadhaar Verhoeff checksum',async()=>{const a=mkAadhaar('23412341234');if(!verhoeff(a)||verhoeff(a.slice(0,11)+((+a[11]+1)%10)))throw'checksum';seed({},2);fill('aadhaar',a.slice(0,11)+((+a[11]+1)%10));if(!/checksum/.test(msg('aadhaar')))throw'bad number accepted'}],
+['PAN verify success and “no record” paths',async()=>{seed({},2);fill('pan','ABCPE1234X');$('#btn_pan').click();await sleep(800);if(!/No record/.test(msg('pan')))throw'expected no record';fill('pan','ABCPE1234F');$('#btn_pan').click();await sleep(800);if(!D.panOk)throw'not verified'}],
+['Aadhaar OTP flow',async()=>{seed({},2);fill('aadhaar',mkAadhaar('23412341234'));$('#btn_aad').click();await sleep(600);if(!$('#f_otp'))throw'otp field missing';fill('otp','123456');if(!D.aadhaarOk||$('#f_otp'))throw'not verified'}],
+['Real-time mobile validation',async()=>{seed({},1);fill('mobile','123');if(!msg('mobile'))throw'no error';fill('mobile','9876543210');if(msg('mobile'))throw'error not cleared'}],
+['Conditional fields per loan type',async()=>{for(const [t,y,n] of [['Personal','purpose','propValue'],['Home','propValue','gst'],['Business','gst','purpose']]){seed({type:t,amount:t==='Business'?'500000':'300000',tenure:'60'},5);if(!$('#f_'+y)||$('#f_'+n))throw t+' fields wrong'}}],
+['Employment type toggles employer/business fields',async()=>{seed({type:'Personal',amount:'100000',tenure:'24'},4);fill('empType','Salaried');if(!$('#f_employer')||$('#f_bizName'))throw'salaried';fill('empType','Self-employed');if($('#f_employer')||!$('#f_bizName'))throw'self-employed'}],
+['Rent field only when Rented',async()=>{seed({},3);fill('resType','Rented');if(!$('#f_rent'))throw'missing';fill('resType','Owned');if($('#f_rent'))throw'still shown'}],
+['Cross-step: age + tenure ≤ 70',async()=>{seed({dob:'1966-01-01',tenure:'240'},1);fill('dob','1966-01-01');if(!/exceeds 70/.test(msg('dob')))throw'got '+msg('dob')}],
+['Cross-step: LTV ≤ 90%',async()=>{seed({amount:'3000000'},5);fill('propValue','3200000');if(!/90% LTV/.test(msg('propValue')))throw'got '+msg('propValue');fill('propValue','4000000');if(msg('propValue'))throw'false error'}],
+['Cross-step: obligations ≤ 60% of income',async()=>{seed({income:'40000',existingEmi:'0'},6);fill('existingEmi','20000');if(!/limit 60%/.test(msg('existingEmi')))throw'got '+msg('existingEmi')}],
+['Continue blocked while step invalid',async()=>{seed({mobile:''},1);$('#next').click();if(step!==1||!msg('mobile'))throw'advanced or no errors'}],
+['Address autocomplete fills fields',async()=>{seed({},3);fill('q','Sitab');$('#acl li').click();if(D.city!=='Nagpur'||D.pincode!=='440012'||$('#f_city').value!=='Nagpur')throw'not filled'}],
+['EMI math',async()=>{const e=emi(1e6,12,12);if(Math.abs(e-88848.79)>.5)throw e}],
+['Image compression shrinks upload',async()=>{const f=await mkImg(1800,1800),r=await compress(f);if(!(r.blob.size<f.size))throw`${f.size}→${r.blob.size}`}],
+['Auto-save and resume',async()=>{window.NOSAVE=0;KEY='loanApp.test';localStorage.removeItem(KEY);seed({},1);fill('name','Resume Test');await sleep(400);const s=load();if(!s||s.D.name!=='Resume Test')throw'not saved';D={};init();$('#resBtn').click();if(D.name!=='Resume Test'||step!==1)throw'not restored';localStorage.removeItem(KEY)}],
+['Submit blocked without signature',async()=>{seed({},8);D.consent=true;render();$('#next').click();if($('#decision'))throw'submitted unsigned'}],
+['Full flow: Home loan end to end',async()=>{D={};step=max=0;touched={};render();fill('type','Home');fill('amount','3000000');fill('tenure','240');$('#next').click();
+ fill('name','Asim Ahmad');fill('dob','1990-05-15');fill('mobile','9876543210');fill('email','asim@example.com');$('#next').click();
+ fill('pan','ABCPE1234F');$('#btn_pan').click();await sleep(800);fill('aadhaar',mkAadhaar('23412341234'));$('#btn_aad').click();await sleep(600);fill('otp','123456');$('#next').click();
+ fill('q','Sitab');$('#acl li').click();fill('resType','Owned');fill('years','5');$('#next').click();
+ fill('empType','Salaried');fill('employer','Acme Ltd');fill('desig','Engineer');fill('income','150000');fill('exp','8');$('#next').click();
+ fill('propType','Apartment');fill('propCity','Nagpur');fill('propValue','4000000');$('#next').click();
+ fill('existingEmi','5000');fill('cards','1');$('#next').click();
+ const f=await mkImg(1600,1200);for(let i=0;i<4;i++){setFile(i,f);await sleep(500)}if(step!==7)throw'not on docs, step '+step;$('#next').click();
+ if(step!==8)throw'not on review';$('#f_consent').click();ink();$('#next').click();if(!$('#decision'))throw'no summary';if(!/Pre-approved/.test($('#decision').textContent))throw'decision '+$('#decision').textContent}]];
+$('#rt').onclick=async()=>{const snap=JSON.stringify({D,step,max}),ul=$('#tp'),bk=KEY;ul.replaceChildren();let ok=0;window.NOSAVE=1;
+ for(const[n,fn]of T){window.NOSAVE=1;KEY=bk;let li=E('li',{class:'p'},'… '+n);ul.append(li);try{await fn();li.textContent='✔ '+n;ok++}catch(e){li.className='f';li.textContent=`✘ ${n}: ${e&&e.message||e}`}}
+ KEY=bk;window.NOSAVE=0;({D,step,max}=JSON.parse(snap));touched={};init();ul.append(E('li',{},E('strong',{},`${ok}/${T.length} passed`)))};
+init();
+</script></body></html>
